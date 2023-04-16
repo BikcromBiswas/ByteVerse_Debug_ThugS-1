@@ -23,13 +23,7 @@ contract ElectionFactory{
     
     mapping(string=>ElectionDetails) mainEmail;
 
-    function createElection(string memory email,string memory elect_name, string memory elect_desc) public{
-        address newElection = address(new Chain());
-        
-        mainEmail[email].address_dep = newElection;
-        mainEmail[email].elec_n = elect_name;
-        mainEmail[email].elec_d = elect_desc;
-    }
+    
 
     function getDeployedElection(string memory email) public view returns (address,string memory,string memory) {
         address val =  mainEmail[email].address_dep;
@@ -37,6 +31,14 @@ contract ElectionFactory{
             return (address(0x0),"","Create an election.");
         else
             return (mainEmail[email].address_dep, mainEmail[email].elec_n,mainEmail[email].elec_d);
+    }
+
+    function createElection(string memory email,string memory elect_name, string memory elect_desc) public{
+        address newElection = address(new Chain());
+        
+        mainEmail[email].address_dep = newElection;
+        mainEmail[email].elec_n = elect_name;
+        mainEmail[email].elec_d = elect_desc;
     }
 }
 
@@ -69,31 +71,22 @@ contract Chain{
         string email;
     }
 
-    mapping(uint=>Candidate) public candidates;
-
     struct Voter {
         uint voter_id;
         bool voted;
     }
 
+    mapping(uint=>Candidate) public candidates;
     mapping(string=>Voter) voters;
 
-    uint totalCandidates;
-
-    uint numVoters;
+    uint totalCandidates;uint numVoters;
 
     function joinCandidate(string memory candidate_name, string memory candidate_description, string memory imgHash,string memory email) public owner {
         uint id_Candidate=totalCandidates++;
         candidates[id_Candidate]=Candidate(candidate_name,candidate_description,imgHash,0,email);
     }
 
-    function canVote(uint candidate_id, string memory mail) public
-    {
-        require(!voters[mail].voted, "Double Voting Detected");
-        voters[mail]= Voter (candidate_id,true);//new vote registered in vote
-        numVoters++;
-        candidates[candidate_id].numVote++;
-    }
+    
 
     function fetchNumOfCandidates() public view returns (uint){
         return totalCandidates;
@@ -103,12 +96,12 @@ contract Chain{
         return numVoters;
     }
 
-    function getCandidate(uint candidateID) public view returns (string memory, string memory, string memory, uint,string memory) {
-        return (candidates[candidateID].name_candidate,
-        candidates[candidateID].desc_candidate,
-        candidates[candidateID].img,
-        candidates[candidateID].numVote,
-        candidates[candidateID].email);
+    function canVote(uint candidate_id, string memory mail) public
+    {
+        require(!voters[mail].voted, "Double Voting Detected");
+        voters[mail]= Voter (candidate_id,true);//new vote registered in vote
+        numVoters++;
+        candidates[candidate_id].numVote++;
     }
 
     function CandidateWinner() public view owner returns (uint) {
@@ -122,6 +115,16 @@ contract Chain{
         }
         return (candidateID);
     }
+    
+    function getCandidate(uint candidateID) public view returns (string memory, string memory, string memory, uint,string memory) {
+        return (candidates[candidateID].name_candidate,
+        candidates[candidateID].desc_candidate,
+        candidates[candidateID].img,
+        candidates[candidateID].numVote,
+        candidates[candidateID].email);
+    }
+
+    
 
     function fetchElectionDetails() public view returns(string memory, string memory) {
         return (elect_name,elect_desc);    
